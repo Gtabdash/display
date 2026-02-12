@@ -1,0 +1,31 @@
+name: Daily Display Snapshot
+on:
+  schedule:
+    # Kl 18:00 svensk tid (vintertid är 17:00 UTC)
+    - cron: '0 17 * * *'
+  workflow_dispatch: # Gör att du kan starta den manuellt
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Snapshot
+        run: |
+          curl -s https://planering.kauppinen.cloud/display > index.html
+          if [ ! -s index.html ]; then
+            echo "Fel: index.html är tom."
+            exit 1
+          fi
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "Markus Kauppinen"
+          git config --global user.email "markus@kauppinen.cloud"
+          git add index.html
+          git commit -m "Snapshot från planering $(date +%Y-%m-%d)" || exit 0
+          git push
